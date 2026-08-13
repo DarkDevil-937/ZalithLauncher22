@@ -19,6 +19,7 @@
 package com.movtery.zalithlauncher.game.version.mod.update
 
 import com.movtery.zalithlauncher.R
+import com.movtery.zalithlauncher.feature.addon.AutoDependencyResolver
 import com.movtery.zalithlauncher.coroutine.Task
 import com.movtery.zalithlauncher.game.download.assets.platform.PlatformVersion
 import com.movtery.zalithlauncher.game.download.assets.platform.mcim.mapMCIMMirrorUrls
@@ -58,7 +59,26 @@ class ModVersionUpdater(
 
     /** 用于速率监测的已写入大小记录 */
     private val mSpeedReport = AtomicLong(0L)
+    suspend fun downloadWithDependencies(
+        versionId: String,
+        gameVersion: String,
+        loader: String
+    ) {
+        val resolver = AutoDependencyResolver(
+            fetchVersionInfo = { id -> null },
+            fetchCompatibleVersionId = { projId, gVer, ldr -> null }
+        )
 
+        val tasks = resolver.resolveDownloadTasks(
+            versionId = versionId,
+            gameVersion = gameVersion,
+            loader = loader,
+            modsDir = targetDir
+        )
+
+        tasks.forEach { task -> task.download() }
+    }
+    
     suspend fun startDownload(task: Task) {
         downloadAll(
             task = task,
